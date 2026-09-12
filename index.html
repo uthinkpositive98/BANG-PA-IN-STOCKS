@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบบันทึกสต็อค - คลินิกทันตกรรมบางปะอิน</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ===== ตั้งค่า Google Drive (แก้ 2 บรรทัดนี้ตามของจริง) ===== */
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com';
+const DRIVE_FOLDER_ID = '1GavjBxzg5ZgrORyMXKWMWwZkvhqlrxyz'; // จากลิงก์โฟลเดอร์ที่ให้มา
+const DRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+</script>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#182230;--muted:#718096;--line:#e6eaf0;--p:#315efb;--green:#13a673;--red:#e55353;--amber:#d99100;--side:#111827}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}.app{display:flex;min-height:100vh}
+aside{width:245px;background:linear-gradient(180deg,#111827,#0c1420);color:#b9c3d2;position:fixed;inset:0 auto 0 0;padding:18px 13px;overflow-y:auto}.brand{color:#fff;font-weight:800;font-size:16px;padding:10px;line-height:1.4}.brand small{display:block;color:#7f8ba0;font-size:10px;font-weight:500;margin-top:3px}.nav{margin-top:15px}.nav h5{color:#667287;text-transform:uppercase;letter-spacing:.12em;margin:17px 10px 6px;font-size:10px}.nav button{display:flex;width:100%;border:0;background:none;color:#aeb9ca;padding:10px;border-radius:10px;text-align:left;gap:10px;cursor:pointer;font-size:13px}.nav button:hover,.nav button.active{background:#202c42;color:#fff}
+main{margin-left:245px;width:calc(100% - 245px);padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}.top h1{margin:0;font-size:25px}.muted{color:var(--muted);font-size:12px}.actions{display:flex;gap:8px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}.btn.primary{background:var(--p);color:#fff;border-color:var(--p)}.btn.danger{color:#b63232}.btn.sm{padding:6px 9px;font-size:12px}
+.view{display:none}.view.active{display:block}.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1.4fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(20,32,55,.06)}.kpi .label{font-size:12px;color:var(--muted)}.kpi .value{font-size:26px;font-weight:850;margin-top:6px}.section{margin-top:16px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}.sectionhead h2{font-size:16px;margin:0}
+table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left}th{font-size:11px;background:#f8fafc;color:#68758b}td.num,th.num{text-align:right}.table{overflow:auto;border:1px solid var(--line);border-radius:12px}.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.search{flex:1;min-width:180px}
+input,select{width:100%;padding:9px;border:1px solid #dce3ec;border-radius:9px;background:#fff;font:inherit}label{display:block;font-size:11px;font-weight:700;color:#68758b;margin-bottom:5px}.form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.wide{grid-column:span 2}.formend{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}.badge{display:inline-block;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:800}.ok{background:#e4f7ef;color:#08734f}.bad{background:#fde9e9;color:#ae3333}.warn{background:#fff3d7;color:#8c6200}
+.bars{height:220px;display:flex;align-items:end;gap:10px;padding:10px 5px 25px;border-bottom:1px solid var(--line)}.bar{flex:1;background:linear-gradient(180deg,#5d7bff,#315efb);border-radius:7px 7px 2px 2px;min-width:8px;position:relative}.bar span{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--muted);white-space:nowrap}.bar em{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-style:normal;font-weight:700;white-space:nowrap}
+.modalbg{position:fixed;inset:0;background:#0007;display:none;place-items:center;padding:18px;z-index:10}.modalbg.open{display:grid}.modal{background:#fff;border-radius:17px;padding:20px;width:min(720px,100%);max-height:90vh;overflow:auto}.modalhead{display:flex;justify-content:space-between;margin-bottom:15px}.modalhead h3{margin:0}.empty{text-align:center;padding:30px;color:var(--muted)}
+@media(max-width:1000px){aside{width:72px}.brand span,.nav h5,.nav button span:last-child{display:none}main{margin-left:72px;width:calc(100% - 72px)}.kpis{grid-template-columns:repeat(2,1fr)}.two,.three{grid-template-columns:1fr}}
+@media(max-width:600px){aside{display:none}main{margin:0;width:100%;padding:14px}.kpis{grid-template-columns:1fr}.form{grid-template-columns:1fr}.wide{grid-column:auto}.top{flex-direction:column;align-items:flex-start;gap:10px}}
+</style></head>
+<body>
+<div class="app"><aside>
+<div class="brand">🦷 คลินิกทันตกรรมบางปะอิน<span><small>ระบบบันทึกสต็อค &amp; ค่าใช้จ่ายซื้อของ</small></span></div>
+<div class="nav">
+<h5>ภาพรวม</h5><button class="active" data-v="dashboard">⌂ <span>Dashboard</span></button>
+<h5>จัดการข้อมูล</h5><button data-v="items">📦 <span>รายการสต็อค</span></button><button data-v="suppliers">🚚 <span>ผู้จำหน่าย</span></button>
+<h5>บันทึก</h5><button data-v="purchases">🧾 <span>ซื้อเข้า</span></button><button data-v="usage">📤 <span>เบิกใช้ / ตัดสต็อค</span></button>
+<h5>รายงาน</h5><button data-v="report">📊 <span>ค่าใช้จ่ายสต็อค</span></button>
+<h5>ตั้งค่า</h5><button data-v="settings">⚙ <span>ตั้งค่า / Backup</span></button>
+</div></aside>
+<main>
+<div class="top"><div><h1 id="title">Dashboard</h1><div class="muted" id="sub">ภาพรวมสต็อคและค่าใช้จ่ายในการสั่งซื้อ</div></div>
+<div class="actions"><button class="btn" onclick="exportDB()">Export</button><button class="btn" onclick="$('file').click()">Import</button><input id="file" type="file" accept=".json" hidden onchange="importDB(event)"></div></div>
+
+<section id="dashboard" class="view active">
+<div class="grid kpis">
+<div class="card kpi"><div class="label">มูลค่าสต็อคคงเหลือ (โดยประมาณ)</div><div class="value" id="kStockValue">฿0</div></div>
+<div class="card kpi"><div class="label">ค่าใช้จ่ายซื้อเข้าเดือนนี้</div><div class="value" id="kMonthSpend">฿0</div></div>
+<div class="card kpi"><div class="label">รายการใกล้หมด / ต้องสั่งซื้อ</div><div class="value" id="kLowStock">0</div></div>
+<div class="card kpi"><div class="label">จำนวนรายการสต็อคทั้งหมด</div><div class="value" id="kItemCount">0</div></div>
+</div>
+<div class="section card"><div class="sectionhead"><h2>ค่าใช้จ่ายซื้อของ 6 เดือนย้อนหลัง</h2><span class="muted" id="trendTotal"></span></div><div id="trend" class="bars"></div></div>
+<div class="grid two section">
+<div class="card"><div class="sectionhead"><h2>⚠ รายการที่ต้องสั่งซื้อเพิ่ม</h2></div><div id="alerts"></div></div>
+<div class="card"><div class="sectionhead"><h2>ซื้อเข้าล่าสุด</h2></div><div id="recentPurchases"></div></div>
+</div>
+</section>
+
+<section id="items" class="view"><div class="card">
+<div class="toolbar"><input id="iq" class="search" placeholder="ค้นหาชื่อ / รหัส / หมวดหมู่..." oninput="render()"><button class="btn primary" onclick="itemForm()">+ เพิ่มรายการสต็อค</button></div>
+<div class="table"><table><thead><tr><th>รูป</th><th>รหัส</th><th>ชื่อรายการ</th><th>หมวดหมู่</th><th>หน่วย</th><th>ผู้จำหน่ายหลัก</th><th class="num">ราคาซื้อล่าสุด</th><th class="num">คงเหลือ</th><th class="num">จุดสั่งซื้อขั้นต่ำ</th><th>สถานะ</th><th></th></tr></thead><tbody id="itemsBody"></tbody></table></div>
+</div></section>
+
+<section id="suppliers" class="view"><div class="card">
+<div class="toolbar"><input id="sq" class="search" placeholder="ค้นหาผู้จำหน่าย..." oninput="render()"><button class="btn primary" onclick="supplierForm()">+ เพิ่มผู้จำหน่าย</button></div>
+<div class="table"><table><thead><tr><th>ชื่อผู้จำหน่าย</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="suppliersBody"></tbody></table></div>
+</div></section>
+
+<section id="purchases" class="view"><div class="card">
+<div class="toolbar" style="flex-wrap:wrap">
+<input id="pq" class="search" placeholder="ค้นหารายการ / ผู้จำหน่าย..." oninput="render()">
+<div style="min-width:150px"><label style="margin-bottom:3px">จากวันที่</label><input id="pFrom" type="date" oninput="render()"></div>
+<div style="min-width:150px"><label style="margin-bottom:3px">ถึงวันที่</label><input id="pTo" type="date" oninput="render()"></div>
+<div style="align-self:end;display:flex;gap:8px"><button class="btn" onclick="clearPurchaseFilter()">ดูทั้งหมด</button><button class="btn primary" onclick="purchaseForm()">+ บันทึกซื้อเข้า</button></div>
+</div>
+<div class="muted" id="pFilterInfo" style="margin-bottom:10px"></div>
+<div class="table"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="num">จำนวน</th><th>หน่วย</th><th class="num">ราคา/หน่วย</th><th class="num">รวม</th><th>ผู้จำหน่าย</th><th>หมายเหตุ/ใบเสร็จ</th><th></th></tr></thead><tbody id="purchasesBody"></tbody></table></div>
+</div></section>
+
+<section id="usage" class="view"><div class="card">
+<div class="toolbar"><input id="uq" class="search" placeholder="ค้นหารายการ..." oninput="render()"><button class="btn primary" onclick="usageForm()">+ บันทึกเบิกใช้</button></div>
+<div class="table"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="num">จำนวน</th><th>หน่วย</th><th>สาเหตุ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="usageBody"></tbody></table></div>
+</div></section>
+
+<section id="report" class="view">
+<div class="grid two">
+<div class="card"><div class="sectionhead"><h2>ค่าใช้จ่ายรวมรายเดือน</h2></div><div class="table"><table><thead><tr><th>เดือน</th><th class="num">ยอดซื้อรวม</th><th class="num">จำนวนบิล</th></tr></thead><tbody id="monthReportBody"></tbody></table></div></div>
+<div class="card"><div class="sectionhead"><h2>รายการที่ใช้จ่ายมากที่สุด</h2></div><div class="table"><table><thead><tr><th>รายการ</th><th>หมวดหมู่</th><th class="num">ยอดซื้อรวม</th><th class="num">จำนวนที่ซื้อ</th></tr></thead><tbody id="topSpendBody"></tbody></table></div></div>
+</div>
+</section>
+
+<section id="settings" class="view">
+<div class="grid two">
+<div class="card"><div class="sectionhead"><h2>ข้อมูลคลินิก</h2></div>
+<div class="form" style="grid-template-columns:1fr"><div><label>ชื่อคลินิก</label><input id="setClinicName" oninput="updateClinicName(this.value)"></div></div>
+</div>
+<div class="card"><div class="sectionhead"><h2>สำรองข้อมูล</h2></div>
+<p class="muted">ข้อมูลทั้งหมดถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น (localStorage) กรุณา Export เก็บไฟล์สำรองไว้เป็นประจำ</p>
+<div class="actions"><button class="btn primary" onclick="exportDB()">Export ข้อมูล (.json)</button><button class="btn" onclick="$('file').click()">Import ข้อมูล</button><button class="btn danger" onclick="resetDB()">ล้างข้อมูลทั้งหมด</button></div>
+</div>
+<div class="card"><div class="sectionhead"><h2>เชื่อมต่อ Google Drive (เก็บรูปสต็อค/ใบเสร็จ)</h2></div>
+<p class="muted">รูปที่แนบในรายการสต็อคและใบเสร็จซื้อเข้าจะถูกอัปโหลดไปที่โฟลเดอร์ Google Drive ที่กำหนดไว้ ต้องล็อกอิน Google อย่างน้อยครั้งแรก (token จะหมดอายุประมาณ 1 ชั่วโมง แล้วต้องกดเชื่อมต่อใหม่)</p>
+<div style="margin:10px 0" id="googleStatus"></div>
+<div><label>Folder ID ปลายทางใน Google Drive</label><input id="setDriveFolder" oninput="updateDriveFolder(this.value)"></div>
+<div class="actions" style="margin-top:10px"><button class="btn primary" onclick="connectGoogle()">เชื่อมต่อ Google Drive</button></div>
+</div>
+</div>
+</section>
+</main></div>
+
+<div class="modalbg" id="modalbg"><div class="modal" id="modal"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=new Date().toISOString().slice(0,10);
+const THAI_MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const fmt=n=>'฿'+Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
+const DEFAULT_DB={settings:{clinicName:'คลินิกทันตกรรมบางปะอิน',driveFolderId:DRIVE_FOLDER_ID},items:[],suppliers:[],purchases:[],usages:[],adjustments:[]};
+let db=loadDB();
+let purchaseFrom='',purchaseTo='';
+
+function loadDB(){try{const raw=localStorage.getItem('bpiStockDB');if(!raw)return structuredClone(DEFAULT_DB);const d=JSON.parse(raw);return {...structuredClone(DEFAULT_DB),...d,settings:{...DEFAULT_DB.settings,...(d.settings||{})}}}catch(e){console.error(e);return structuredClone(DEFAULT_DB)}}
+function save(){localStorage.setItem('bpiStockDB',JSON.stringify(db));render()}
+
+function supplierName(id){return db.suppliers.find(s=>s.id===id)?.name||'-'}
+function itemById(id){return db.items.find(i=>i.id===id)}
+function itemPurchasedQty(id){return db.purchases.filter(p=>p.itemId===id).reduce((a,p)=>a+Number(p.qty||0),0)}
+function itemUsedQty(id){return db.usages.filter(u=>u.itemId===id).reduce((a,u)=>a+Number(u.qty||0),0)}
+function itemAdjustQty(id){return (db.adjustments||[]).filter(a=>a.itemId===id).reduce((a,x)=>a+Number(x.delta||0),0)}
+function stockOnHand(item){return Number(item.openingStock||0)+itemPurchasedQty(item.id)-itemUsedQty(item.id)+itemAdjustQty(item.id)}
+function stockValue(item){return stockOnHand(item)*Number(item.lastPrice||0)}
+
+function toast(msg){const t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#182230;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.2)';document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function closeModal(){$('modalbg').classList.remove('open');$('modal').innerHTML=''}
+function openModal(html){$('modal').innerHTML=html;$('modalbg').classList.add('open')}
+
+/* ---------- GOOGLE DRIVE (OAuth) ---------- */
+let gAccessToken=null, gTokenExpiry=0, gTokenClient=null;
+function driveConnected(){return !!gAccessToken && Date.now()<gTokenExpiry}
+function initGoogle(){
+ if(!window.google||!google.accounts){setTimeout(initGoogle,300);return}
+ gTokenClient=google.accounts.oauth2.initTokenClient({
+  client_id:GOOGLE_CLIENT_ID,
+  scope:DRIVE_SCOPES,
+  callback:(resp)=>{
+   if(resp.error){toast('เชื่อมต่อ Google ไม่สำเร็จ: '+resp.error);return}
+   gAccessToken=resp.access_token;gTokenExpiry=Date.now()+(Number(resp.expires_in||3300)*1000);
+   updateGoogleStatus();toast('เชื่อมต่อ Google Drive แล้ว');
+  }
+ });
+ updateGoogleStatus();
+}
+function connectGoogle(){
+ if(GOOGLE_CLIENT_ID.startsWith('YOUR_')){alert('ยังไม่ได้ตั้งค่า GOOGLE_CLIENT_ID ในไฟล์ (ดูคอมเมนต์ด้านบนของโค้ด)');return}
+ if(!gTokenClient){initGoogle();setTimeout(connectGoogle,400);return}
+ gTokenClient.requestAccessToken({prompt:gAccessToken?'':'consent'});
+}
+function ensureAuth(){
+ return new Promise((resolve,reject)=>{
+  if(driveConnected()){resolve(gAccessToken);return}
+  if(GOOGLE_CLIENT_ID.startsWith('YOUR_')){alert('ยังไม่ได้ตั้งค่า Google Client ID — ไปที่ตั้งค่า > เชื่อมต่อ Google Drive');reject('no-client-id');return}
+  if(!gTokenClient){alert('ระบบ Google ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง');reject('not-ready');return}
+  gTokenClient.callback=(resp)=>{
+   if(resp.error){toast('เชื่อมต่อ Google ไม่สำเร็จ: '+resp.error);reject(resp.error);return}
+   gAccessToken=resp.access_token;gTokenExpiry=Date.now()+(Number(resp.expires_in||3300)*1000);
+   updateGoogleStatus();resolve(gAccessToken);
+  };
+  gTokenClient.requestAccessToken({prompt:''});
+ });
+}
+function updateGoogleStatus(){
+ const el=$('googleStatus');if(!el)return;
+ el.innerHTML=driveConnected()?'<span class="badge ok">เชื่อมต่อ Google Drive แล้ว</span>':'<span class="badge warn">ยังไม่ได้เชื่อมต่อ</span>';
+}
+async function uploadFileToDrive(file, folderId){
+ await ensureAuth();
+ const meta={name:`${Date.now()}_${file.name}`, parents:[folderId||db.settings.driveFolderId||DRIVE_FOLDER_ID]};
+ const form=new FormData();
+ form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+ form.append('file', file);
+ const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+  method:'POST', headers:{Authorization:'Bearer '+gAccessToken}, body:form
+ });
+ if(!res.ok) throw new Error('อัปโหลดไม่สำเร็จ: '+res.status);
+ const data=await res.json();
+ const fileId=data.id;
+ // ให้ดูรูปผ่านลิงก์ได้โดยไม่ต้องล็อกอินซ้ำ (แชร์แบบดูได้เฉพาะลิงก์)
+ try{
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,{
+   method:'POST', headers:{Authorization:'Bearer '+gAccessToken,'Content-Type':'application/json'},
+   body:JSON.stringify({role:'reader',type:'anyone'})
+  });
+ }catch(e){console.warn('ตั้งสิทธิ์แชร์ไม่สำเร็จ',e)}
+ return {fileId, thumbUrl:`https://drive.google.com/thumbnail?id=${fileId}&sz=w300`, viewUrl:`https://drive.google.com/file/d/${fileId}/view`};
+}
+async function handlePhotoInput(inputEl, targetPrefix){
+ const file=inputEl.files[0]; if(!file) return;
+ const previewEl=$(targetPrefix+'Preview');
+ if(previewEl) previewEl.textContent='กำลังอัปโหลด...';
+ try{
+  const up=await uploadFileToDrive(file);
+  $(targetPrefix+'FileId').value=up.fileId;
+  $(targetPrefix+'Url').value=up.thumbUrl;
+  $(targetPrefix+'ViewUrl').value=up.viewUrl;
+  if(previewEl) previewEl.innerHTML=`<img src="${up.thumbUrl}" style="max-width:120px;border-radius:8px;border:1px solid var(--line)">`;
+  toast('อัปโหลดรูปสำเร็จ');
+ }catch(e){
+  console.error(e);
+  if(previewEl) previewEl.textContent='';
+  alert('อัปโหลดรูปไม่สำเร็จ: '+(e.message||e));
+ }
+ inputEl.value='';
+}
+function viewPhoto(url){ if(!url) return; window.open(url,'_blank') }
+
+/* ---------- ITEMS ---------- */
+function itemForm(id){
+ const it=id?itemById(id):{id:uid(),code:'',name:'',category:'',unit:'',supplierId:'',lastPrice:0,reorderPoint:0,openingStock:0,photoFileId:'',photoUrl:'',photoViewUrl:''};
+ const supplierOpts=db.suppliers.map(s=>`<option value="${s.id}" ${s.id===it.supplierId?'selected':''}>${esc(s.name)}</option>`).join('');
+ openModal(`<div class="modalhead"><h3>${id?'แก้ไข':'เพิ่ม'}รายการสต็อค</h3><button class="btn sm" onclick="closeModal()">✕</button></div>
+ <div class="form">
+ <div><label>รหัส</label><input id="fCode" value="${esc(it.code)}"></div>
+ <div class="wide"><label>ชื่อรายการ *</label><input id="fName" value="${esc(it.name)}"></div>
+ <div><label>หมวดหมู่</label><input id="fCategory" list="catList" value="${esc(it.category)}"><datalist id="catList">${[...new Set(db.items.map(i=>i.category).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+ <div><label>หน่วย</label><input id="fUnit" list="unitList" value="${esc(it.unit)}"><datalist id="unitList">${[...new Set(db.items.map(i=>i.unit).filter(Boolean))].map(u=>`<option value="${esc(u)}">`).join('')}</datalist></div>
+ <div class="wide"><label>ผู้จำหน่ายหลัก</label><select id="fSupplier"><option value="">-- ไม่ระบุ --</option>${supplierOpts}</select></div>
+ <div><label>ราคาซื้อล่าสุด (บาท/หน่วย)</label><input id="fPrice" type="number" step="0.01" value="${it.lastPrice||0}"></div>
+ <div><label>จุดสั่งซื้อขั้นต่ำ</label><input id="fReorder" type="number" step="0.01" value="${it.reorderPoint||0}"></div>
+ <div><label>สต็อคเริ่มต้น (ก่อนเริ่มใช้ระบบ)</label><input id="fOpening" type="number" step="0.01" value="${it.openingStock||0}"></div>
+ <div class="wide"><label>รูปของสต็อคชิ้นนี้</label>
+  <input id="fPhotoInput" type="file" accept="image/*" capture="environment" onchange="handlePhotoInput(this,'fPhoto')">
+  <div id="fPhotoPreview" style="margin-top:8px">${it.photoUrl?`<img src="${it.photoUrl}" style="max-width:120px;border-radius:8px;border:1px solid var(--line)">`:''}</div>
+  <input type="hidden" id="fPhotoFileId" value="${esc(it.photoFileId||'')}">
+  <input type="hidden" id="fPhotoUrl" value="${esc(it.photoUrl||'')}">
+  <input type="hidden" id="fPhotoViewUrl" value="${esc(it.photoViewUrl||'')}">
+ </div>
+ </div>
+ <div class="formend">${id?`<button class="btn danger" onclick="deleteItem('${id}')">ลบ</button>`:''}<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn primary" onclick="saveItem('${it.id}',${id?'true':'false'})">บันทึก</button></div>`);
+ $('fSupplier').value=it.supplierId||'';
+}
+function saveItem(id,isEdit){
+ const name=$('fName').value.trim();
+ if(!name){alert('กรุณาระบุชื่อรายการ');return}
+ const data={id,code:$('fCode').value.trim(),name,category:$('fCategory').value.trim(),unit:$('fUnit').value.trim(),supplierId:$('fSupplier').value,lastPrice:Number($('fPrice').value||0),reorderPoint:Number($('fReorder').value||0),openingStock:Number($('fOpening').value||0),photoFileId:$('fPhotoFileId').value,photoUrl:$('fPhotoUrl').value,photoViewUrl:$('fPhotoViewUrl').value};
+ if(isEdit){const i=db.items.findIndex(x=>x.id===id);db.items[i]=data}else{db.items.push(data)}
+ closeModal();save();toast('บันทึกรายการสต็อคแล้ว')
+}
+/* ---------- QUICK QTY ADJUST ---------- */
+function adjustQtyForm(id){
+ const it=itemById(id);if(!it)return;
+ const onHand=stockOnHand(it);
+ openModal(`<div class="modalhead"><h3>ปรับจำนวนคงเหลือ — ${esc(it.name)}</h3><button class="btn sm" onclick="closeModal()">✕</button></div>
+ <div class="form" style="grid-template-columns:1fr">
+ <div><label>จำนวนคงเหลือปัจจุบัน</label><input value="${onHand} ${esc(it.unit||'')}" disabled></div>
+ <div><label>ใส่จำนวนคงเหลือใหม่ *</label><input id="fAdjQty" type="number" step="0.01" value="${onHand}"></div>
+ <div><label>หมายเหตุ</label><input id="fAdjNote" placeholder="เช่น นับสต็อคจริง"></div>
+ </div>
+ <div class="formend"><button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn primary" onclick="saveAdjustQty('${id}')">บันทึก</button></div>`);
+}
+function saveAdjustQty(id){
+ const it=itemById(id);if(!it)return;
+ const newQty=Number($('fAdjQty').value);
+ if(isNaN(newQty)){alert('กรุณาระบุจำนวนที่ถูกต้อง');return}
+ const onHand=stockOnHand(it);
+ const delta=newQty-onHand;
+ if(delta!==0){
+  db.adjustments=db.adjustments||[];
+  db.adjustments.push({id:uid(),date:today,itemId:id,delta,qty:newQty,note:$('fAdjNote').value.trim()});
+ }
+ closeModal();save();toast('ปรับจำนวนคงเหลือแล้ว')
+}
+function deleteItem(id){if(!confirm('ลบรายการนี้? ประวัติการซื้อ/เบิกใช้ที่เกี่ยวข้องจะยังคงอยู่'))return;db.items=db.items.filter(i=>i.id!==id);closeModal();save()}
+
+/* ---------- SUPPLIERS ---------- */
+function supplierForm(id){
+ const s=id?db.suppliers.find(x=>x.id===id):{id:uid(),name:'',contact:'',phone:'',note:''};
+ openModal(`<div class="modalhead"><h3>${id?'แก้ไข':'เพิ่ม'}ผู้จำหน่าย</h3><button class="btn sm" onclick="closeModal()">✕</button></div>
+ <div class="form">
+ <div class="wide"><label>ชื่อผู้จำหน่าย *</label><input id="fSName" value="${esc(s.name)}"></div>
+ <div><label>ผู้ติดต่อ</label><input id="fSContact" value="${esc(s.contact)}"></div>
+ <div><label>เบอร์โทร</label><input id="fSPhone" value="${esc(s.phone)}"></div>
+ <div class="wide"><label>หมายเหตุ</label><input id="fSNote" value="${esc(s.note)}"></div>
+ </div>
+ <div class="formend">${id?`<button class="btn danger" onclick="deleteSupplier('${id}')">ลบ</button>`:''}<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn primary" onclick="saveSupplier('${s.id}',${id?'true':'false'})">บันทึก</button></div>`);
+}
+function saveSupplier(id,isEdit){
+ const name=$('fSName').value.trim();
+ if(!name){alert('กรุณาระบุชื่อผู้จำหน่าย');return}
+ const data={id,name,contact:$('fSContact').value.trim(),phone:$('fSPhone').value.trim(),note:$('fSNote').value.trim()};
+ if(isEdit){const i=db.suppliers.findIndex(x=>x.id===id);db.suppliers[i]=data}else{db.suppliers.push(data)}
+ closeModal();save();toast('บันทึกผู้จำหน่ายแล้ว')
+}
+function deleteSupplier(id){if(!confirm('ลบผู้จำหน่ายนี้?'))return;db.suppliers=db.suppliers.filter(s=>s.id!==id);closeModal();save()}
+
+/* ---------- PURCHASES ---------- */
+function purchaseForm(id){
+ const p=id?db.purchases.find(x=>x.id===id):{id:uid(),date:today,itemId:'',qty:1,unitPrice:0,supplierId:'',note:'',receiptFileId:'',receiptUrl:'',receiptViewUrl:''};
+ const itemOpts=db.items.map(i=>`<option value="${i.id}" ${i.id===p.itemId?'selected':''}>${esc(i.name)}${i.unit?' ('+esc(i.unit)+')':''}</option>`).join('');
+ const supplierOpts=db.suppliers.map(s=>`<option value="${s.id}" ${s.id===p.supplierId?'selected':''}>${esc(s.name)}</option>`).join('');
+ openModal(`<div class="modalhead"><h3>${id?'แก้ไข':'บันทึก'}การซื้อเข้า</h3><button class="btn sm" onclick="closeModal()">✕</button></div>
+ <div class="form">
+ <div><label>วันที่</label><input id="fPDate" type="date" value="${p.date}"></div>
+ <div class="wide"><label>รายการ *</label><select id="fPItem" onchange="onPurchaseItemChange()"><option value="">-- เลือกรายการ --</option>${itemOpts}</select></div>
+ <div><label>จำนวน</label><input id="fPQty" type="number" step="0.01" value="${p.qty}"></div>
+ <div><label>ราคา/หน่วย (บาท)</label><input id="fPPrice" type="number" step="0.01" value="${p.unitPrice}"></div>
+ <div class="wide"><label>ผู้จำหน่าย</label><select id="fPSupplier"><option value="">-- ไม่ระบุ --</option>${supplierOpts}</select></div>
+ <div class="wide"><label>หมายเหตุ / เลขที่ใบเสร็จ</label><input id="fPNote" value="${esc(p.note||'')}" placeholder="เช่น เลขที่ใบเสร็จ หรือรายละเอียดเพิ่มเติม"></div>
+ <div class="wide"><label>แนบรูปใบเสร็จ (เก็บขึ้น Google Drive)</label>
+  <input id="fReceiptInput" type="file" accept="image/*" capture="environment" onchange="handlePhotoInput(this,'fReceipt')">
+  <div id="fReceiptPreview" style="margin-top:8px">${p.receiptUrl?`<img src="${p.receiptUrl}" style="max-width:120px;border-radius:8px;border:1px solid var(--line)">`:''}</div>
+  <input type="hidden" id="fReceiptFileId" value="${esc(p.receiptFileId||'')}">
+  <input type="hidden" id="fReceiptUrl" value="${esc(p.receiptUrl||'')}">
+  <input type="hidden" id="fReceiptViewUrl" value="${esc(p.receiptViewUrl||'')}">
+ </div>
+ </div>
+ <div class="muted" style="margin-top:8px">รวม: <b id="fPTotal">฿0</b></div>
+ <div class="formend">${id?`<button class="btn danger" onclick="deletePurchase('${id}')">ลบ</button>`:''}<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn primary" onclick="savePurchase('${p.id}',${id?'true':'false'})">บันทึก</button></div>`);
+ $('fPItem').value=p.itemId||'';$('fPSupplier').value=p.supplierId||'';
+ $('fPQty').oninput=updatePTotal;$('fPPrice').oninput=updatePTotal;updatePTotal();
+}
+function onPurchaseItemChange(){
+ const it=itemById($('fPItem').value);
+ if(it){if(!Number($('fPPrice').value))$('fPPrice').value=it.lastPrice||0;if(it.supplierId)$('fPSupplier').value=it.supplierId}
+ updatePTotal();
+}
+function updatePTotal(){const q=Number($('fPQty').value||0),pr=Number($('fPPrice').value||0);$('fPTotal').textContent=fmt(q*pr)}
+function savePurchase(id,isEdit){
+ const itemId=$('fPItem').value;
+ if(!itemId){alert('กรุณาเลือกรายการสต็อค');return}
+ const qty=Number($('fPQty').value||0);
+ if(qty<=0){alert('กรุณาระบุจำนวนที่ถูกต้อง');return}
+ const unitPrice=Number($('fPPrice').value||0);
+ const data={id,date:$('fPDate').value||today,itemId,qty,unitPrice,total:qty*unitPrice,supplierId:$('fPSupplier').value,note:$('fPNote').value.trim(),receiptFileId:$('fReceiptFileId').value,receiptUrl:$('fReceiptUrl').value,receiptViewUrl:$('fReceiptViewUrl').value};
+ if(isEdit){const i=db.purchases.findIndex(x=>x.id===id);db.purchases[i]=data}else{db.purchases.push(data)}
+ const it=itemById(itemId);if(it){it.lastPrice=unitPrice;if(data.supplierId)it.supplierId=data.supplierId}
+ closeModal();save();toast('บันทึกการซื้อเข้าแล้ว')
+}
+function deletePurchase(id){if(!confirm('ลบรายการซื้อนี้?'))return;db.purchases=db.purchases.filter(p=>p.id!==id);closeModal();save()}
+function clearPurchaseFilter(){purchaseFrom='';purchaseTo='';$('pFrom').value='';$('pTo').value='';render()}
+
+/* ---------- USAGE ---------- */
+const USAGE_REASONS=['เบิกใช้ในคลินิก','ของเสีย/ชำรุด','หมดอายุ','อื่นๆ'];
+function usageForm(id){
+ const u=id?db.usages.find(x=>x.id===id):{id:uid(),date:today,itemId:'',qty:1,reason:USAGE_REASONS[0],note:''};
+ const itemOpts=db.items.map(i=>`<option value="${i.id}" ${i.id===u.itemId?'selected':''}>${esc(i.name)}${i.unit?' ('+esc(i.unit)+')':''}</option>`).join('');
+ const reasonOpts=USAGE_REASONS.map(r=>`<option value="${r}" ${r===u.reason?'selected':''}>${r}</option>`).join('');
+ openModal(`<div class="modalhead"><h3>${id?'แก้ไข':'บันทึก'}การเบิกใช้/ตัดสต็อค</h3><button class="btn sm" onclick="closeModal()">✕</button></div>
+ <div class="form">
+ <div><label>วันที่</label><input id="fUDate" type="date" value="${u.date}"></div>
+ <div class="wide"><label>รายการ *</label><select id="fUItem"><option value="">-- เลือกรายการ --</option>${itemOpts}</select></div>
+ <div><label>จำนวน</label><input id="fUQty" type="number" step="0.01" value="${u.qty}"></div>
+ <div><label>สาเหตุ</label><select id="fUReason">${reasonOpts}</select></div>
+ <div class="wide"><label>หมายเหตุ</label><input id="fUNote" value="${esc(u.note||'')}"></div>
+ </div>
+ <div class="formend">${id?`<button class="btn danger" onclick="deleteUsage('${id}')">ลบ</button>`:''}<button class="btn" onclick="closeModal()">ยกเลิก</button><button class="btn primary" onclick="saveUsage('${u.id}',${id?'true':'false'})">บันทึก</button></div>`);
+ $('fUItem').value=u.itemId||'';
+}
+function saveUsage(id,isEdit){
+ const itemId=$('fUItem').value;
+ if(!itemId){alert('กรุณาเลือกรายการสต็อค');return}
+ const qty=Number($('fUQty').value||0);
+ if(qty<=0){alert('กรุณาระบุจำนวนที่ถูกต้อง');return}
+ const data={id,date:$('fUDate').value||today,itemId,qty,reason:$('fUReason').value,note:$('fUNote').value.trim()};
+ if(isEdit){const i=db.usages.findIndex(x=>x.id===id);db.usages[i]=data}else{db.usages.push(data)}
+ closeModal();save();toast('บันทึกการเบิกใช้แล้ว')
+}
+function deleteUsage(id){if(!confirm('ลบรายการนี้?'))return;db.usages=db.usages.filter(u=>u.id!==id);closeModal();save()}
+
+/* ---------- RENDER ---------- */
+function render(){
+ $('setClinicName').value=db.settings.clinicName||'';
+ if($('setDriveFolder'))$('setDriveFolder').value=db.settings.driveFolderId||DRIVE_FOLDER_ID;
+ updateGoogleStatus();
+ renderDashboard();renderItems();renderSuppliers();renderPurchases();renderUsage();renderReport();
+}
+function renderDashboard(){
+ const totalValue=db.items.reduce((a,i)=>a+stockValue(i),0);
+ $('kStockValue').textContent=fmt(totalValue);
+ const now=new Date();const ym=now.toISOString().slice(0,7);
+ const monthSpend=db.purchases.filter(p=>p.date.startsWith(ym)).reduce((a,p)=>a+Number(p.total||0),0);
+ $('kMonthSpend').textContent=fmt(monthSpend);
+ const low=db.items.filter(i=>stockOnHand(i)<=Number(i.reorderPoint||0));
+ $('kLowStock').textContent=low.length;
+ $('kItemCount').textContent=db.items.length;
+ const alerts=$('alerts');
+ alerts.innerHTML=low.length?low.map(i=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${esc(i.name)}</b><div class="muted">คงเหลือ ${stockOnHand(i)} ${esc(i.unit||'')}</div></div><span class="badge ${stockOnHand(i)<=0?'bad':'warn'}">ขั้นต่ำ ${i.reorderPoint||0}</span></div>`).join(''):'<div class="empty">ไม่มีรายการที่ต้องสั่งซื้อ</div>';
+ const recent=[...db.purchases].sort((a,b)=>b.date.localeCompare(a.date)||0).slice(0,6);
+ $('recentPurchases').innerHTML=recent.length?recent.map(p=>{const it=itemById(p.itemId);return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${esc(it?.name||'-')}</b><div class="muted">${p.date} • ${p.qty} ${esc(it?.unit||'')}</div></div><b>${fmt(p.total)}</b></div>`}).join(''):'<div class="empty">ยังไม่มีรายการซื้อเข้า</div>';
+ const months=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d)}
+ const sums=months.map(d=>{const key=d.toISOString().slice(0,7);return db.purchases.filter(p=>p.date.startsWith(key)).reduce((a,p)=>a+Number(p.total||0),0)});
+ const max=Math.max(1,...sums);
+ $('trend').innerHTML=months.map((d,idx)=>`<div class="bar" style="height:${Math.max(4,sums[idx]/max*100)}%"><em>${sums[idx]?Math.round(sums[idx]).toLocaleString():''}</em><span>${THAI_MONTHS[d.getMonth()].slice(0,3)}</span></div>`).join('');
+ $('trendTotal').textContent='รวม '+fmt(sums.reduce((a,b)=>a+b,0));
+}
+function renderItems(){
+ const q=($('iq')?.value||'').toLowerCase();
+ const rows=db.items.filter(i=>!q||[i.code,i.name,i.category].some(v=>(v||'').toLowerCase().includes(q)));
+ $('itemsBody').innerHTML=rows.length?rows.map(i=>{
+  const onHand=stockOnHand(i);const low=onHand<=Number(i.reorderPoint||0);
+  const thumb=i.photoUrl?`<img src="${i.photoUrl}" onclick="viewPhoto('${i.photoViewUrl||i.photoUrl}')" style="width:36px;height:36px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--line)">`:`<span style="opacity:.35">📦</span>`;
+  return `<tr><td>${thumb}</td><td>${esc(i.code)}</td><td><b>${esc(i.name)}</b></td><td>${esc(i.category)}</td><td>${esc(i.unit)}</td><td>${esc(supplierName(i.supplierId))}</td><td class="num">${fmt(i.lastPrice)}</td><td class="num">${onHand} <button class="btn sm" title="ปรับจำนวน" onclick="adjustQtyForm('${i.id}')" style="padding:2px 6px;margin-left:4px">✎</button></td><td class="num">${i.reorderPoint||0}</td><td><span class="badge ${low?(onHand<=0?'bad':'warn'):'ok'}">${low?(onHand<=0?'หมด':'ใกล้หมด'):'ปกติ'}</span></td><td><button class="btn sm" onclick="itemForm('${i.id}')">แก้ไข</button></td></tr>`
+ }).join(''):'<tr><td colspan="11"><div class="empty">ยังไม่มีรายการสต็อค — กด "+ เพิ่มรายการสต็อค" เพื่อเริ่มต้น</div></td></tr>';
+}
+function renderSuppliers(){
+ const q=($('sq')?.value||'').toLowerCase();
+ const rows=db.suppliers.filter(s=>!q||s.name.toLowerCase().includes(q));
+ $('suppliersBody').innerHTML=rows.length?rows.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.contact)}</td><td>${esc(s.phone)}</td><td>${esc(s.note)}</td><td><button class="btn sm" onclick="supplierForm('${s.id}')">แก้ไข</button></td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">ยังไม่มีผู้จำหน่าย</div></td></tr>';
+}
+function renderPurchases(){
+ const q=($('pq')?.value||'').toLowerCase();
+ if($('pFrom'))purchaseFrom=$('pFrom').value;if($('pTo'))purchaseTo=$('pTo').value;
+ let rows=[...db.purchases].sort((a,b)=>b.date.localeCompare(a.date));
+ if(purchaseFrom)rows=rows.filter(p=>p.date>=purchaseFrom);
+ if(purchaseTo)rows=rows.filter(p=>p.date<=purchaseTo);
+ if(q)rows=rows.filter(p=>{const it=itemById(p.itemId);return (it?.name||'').toLowerCase().includes(q)||supplierName(p.supplierId).toLowerCase().includes(q)});
+ $('pFilterInfo').textContent=(purchaseFrom||purchaseTo)?`แสดงผล ${purchaseFrom||'...'} ถึง ${purchaseTo||'...'} (${rows.length} รายการ)`:`ทั้งหมด ${rows.length} รายการ`;
+ $('purchasesBody').innerHTML=rows.length?rows.map(p=>{const it=itemById(p.itemId);const receipt=p.receiptUrl?` <button class="btn sm" title="ดูใบเสร็จ" onclick="viewPhoto('${p.receiptViewUrl||p.receiptUrl}')" style="padding:2px 6px">📷</button>`:'';return `<tr><td>${p.date}</td><td><b>${esc(it?.name||'-')}</b></td><td class="num">${p.qty}</td><td>${esc(it?.unit||'')}</td><td class="num">${fmt(p.unitPrice)}</td><td class="num">${fmt(p.total)}</td><td>${esc(supplierName(p.supplierId))}</td><td>${esc(p.note)}${receipt}</td><td><button class="btn sm" onclick="purchaseForm('${p.id}')">แก้ไข</button></td></tr>`}).join(''):'<tr><td colspan="9"><div class="empty">ยังไม่มีรายการซื้อเข้า</div></td></tr>';
+}
+function renderUsage(){
+ const q=($('uq')?.value||'').toLowerCase();
+ let rows=[...db.usages].sort((a,b)=>b.date.localeCompare(a.date));
+ if(q)rows=rows.filter(u=>(itemById(u.itemId)?.name||'').toLowerCase().includes(q));
+ $('usageBody').innerHTML=rows.length?rows.map(u=>{const it=itemById(u.itemId);return `<tr><td>${u.date}</td><td><b>${esc(it?.name||'-')}</b></td><td class="num">${u.qty}</td><td>${esc(it?.unit||'')}</td><td>${esc(u.reason)}</td><td>${esc(u.note)}</td><td><button class="btn sm" onclick="usageForm('${u.id}')">แก้ไข</button></td></tr>`}).join(''):'<tr><td colspan="7"><div class="empty">ยังไม่มีรายการเบิกใช้</div></td></tr>';
+}
+function renderReport(){
+ const byMonth={};
+ db.purchases.forEach(p=>{const key=p.date.slice(0,7);byMonth[key]=byMonth[key]||{total:0,count:0};byMonth[key].total+=Number(p.total||0);byMonth[key].count++});
+ const months=Object.keys(byMonth).sort().reverse();
+ $('monthReportBody').innerHTML=months.length?months.map(m=>{const [y,mo]=m.split('-');return `<tr><td>${THAI_MONTHS[Number(mo)-1]} ${Number(y)+543}</td><td class="num">${fmt(byMonth[m].total)}</td><td class="num">${byMonth[m].count}</td></tr>`}).join(''):'<tr><td colspan="3"><div class="empty">ยังไม่มีข้อมูล</div></td></tr>';
+ const byItem={};
+ db.purchases.forEach(p=>{byItem[p.itemId]=byItem[p.itemId]||{total:0,qty:0};byItem[p.itemId].total+=Number(p.total||0);byItem[p.itemId].qty+=Number(p.qty||0)});
+ const top=Object.entries(byItem).sort((a,b)=>b[1].total-a[1].total).slice(0,12);
+ $('topSpendBody').innerHTML=top.length?top.map(([id,v])=>{const it=itemById(id);return `<tr><td><b>${esc(it?.name||'(ถูกลบแล้ว)')}</b></td><td>${esc(it?.category||'')}</td><td class="num">${fmt(v.total)}</td><td class="num">${v.qty} ${esc(it?.unit||'')}</td></tr>`}).join(''):'<tr><td colspan="4"><div class="empty">ยังไม่มีข้อมูล</div></td></tr>';
+}
+
+/* ---------- SETTINGS / BACKUP ---------- */
+function updateClinicName(v){db.settings.clinicName=v;localStorage.setItem('bpiStockDB',JSON.stringify(db))}
+function updateDriveFolder(v){db.settings.driveFolderId=v.trim();localStorage.setItem('bpiStockDB',JSON.stringify(db))}
+function exportDB(){
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download=`bpi-stock-backup-${today}.json`;a.click();
+}
+function importDB(e){
+ const file=e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=ev=>{
+  try{
+   const data=JSON.parse(ev.target.result);
+   if(!confirm('การนำเข้าข้อมูลจะแทนที่ข้อมูลปัจจุบันทั้งหมด ยืนยันหรือไม่?'))return;
+   db={...structuredClone(DEFAULT_DB),...data,settings:{...DEFAULT_DB.settings,...(data.settings||{})}};
+   save();toast('นำเข้าข้อมูลสำเร็จ');
+  }catch(err){alert('ไฟล์ไม่ถูกต้อง: '+err.message)}
+ };
+ reader.readAsText(file);e.target.value='';
+}
+function resetDB(){if(!confirm('ล้างข้อมูลทั้งหมดในเครื่องนี้? การกระทำนี้ไม่สามารถย้อนกลับได้ แนะนำให้ Export สำรองก่อน'))return;db=structuredClone(DEFAULT_DB);save();toast('ล้างข้อมูลแล้ว')}
+
+/* ---------- NAV ---------- */
+const labels={dashboard:['Dashboard','ภาพรวมสต็อคและค่าใช้จ่ายในการสั่งซื้อ'],items:['รายการสต็อค','วัสดุ/ของใช้ในคลินิกและสถานะคงเหลือ'],suppliers:['ผู้จำหน่าย','รายชื่อร้าน/บริษัทที่สั่งซื้อของด้วย'],purchases:['ซื้อเข้า','บันทึกทุกครั้งที่สั่งซื้อของเข้าคลินิก'],usage:['เบิกใช้ / ตัดสต็อค','บันทึกการเบิกใช้ ของเสีย หรือของหมดอายุ'],report:['ค่าใช้จ่ายสต็อค','สรุปค่าใช้จ่ายรายเดือนและรายการที่ใช้จ่ายมากที่สุด'],settings:['ตั้งค่า / Backup','ข้อมูลคลินิกและการสำรองข้อมูล']};
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+ const v=b.dataset.v;document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$(v).classList.add('active');
+ $('title').textContent=labels[v][0];$('sub').textContent=labels[v][1];
+});
+render();
+initGoogle();
+</script>
+</body></html>
